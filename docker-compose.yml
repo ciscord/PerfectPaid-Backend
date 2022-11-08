@@ -1,0 +1,59 @@
+version: '3.7'
+
+services:
+  main:
+    container_name: main
+    build:
+      context: .
+      target: development
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - ${PORT}:${PORT}
+      - 9229:9229
+    command: npm run start:debug
+    env_file:
+      - .env
+    networks:
+      - webnet
+    depends_on:
+      - postgres
+      #   - redis
+
+  sqs:
+    image: roribio16/alpine-sqs
+    ports:
+      - '9324:9324'
+      - '9325:9325'
+    networks:
+      - webnet
+    volumes:
+      - ./config/elasticmq.conf:/opt/config/elasticmq.conf
+
+  postgres:
+    container_name: postgres
+    image: postgis/postgis:12-3.1
+    networks:
+      - webnet
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: user
+      POSTGRES_DB: perfectpaid
+      PG_DATA: /var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  #   redis:
+  #     container_name: redis
+  #     image: redis:5
+  #     networks:
+  #       - webnet
+
+networks:
+  webnet:
+
+volumes:
+  pgdata:
